@@ -87,7 +87,7 @@ public class SharedEventLoopGroupWebSocketClient {
 
         Channel channel = bootstrap.connect(uri.getHost(), uri.getPort()).sync().channel();
         channel.writeAndFlush(new TextWebSocketFrame("{\"sub\":\"market.btcusdt.trade.detail\",\"id\":\"crypto-ws-client\"}"));
-        channel.writeAndFlush(new TextWebSocketFrame("{\"sub\":\"market.ethusdt.trade.detail\",\"id\":\"crypto-ws-client\"}"));
+        //channel.writeAndFlush(new TextWebSocketFrame("{\"sub\":\"market.ethusdt.trade.detail\",\"id\":\"crypto-ws-client\"}"));
 
         // 不要在这里关闭Future，因为我们想要保持连接开放
         //channel.closeFuture().await();
