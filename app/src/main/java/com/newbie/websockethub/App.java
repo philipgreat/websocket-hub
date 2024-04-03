@@ -3,12 +3,19 @@
  */
 package com.newbie.websockethub;
 
+import com.newbie.indexprice.core.IndexPricingEngine;
+import com.newbie.indexprice.simpleimpl.IndexPricingEngineImpl;
+
 public class App {
     public String getGreeting() {
         return "Hello World!";
     }
 
     public static void main(String[] args) {
-        System.out.println(new App().getGreeting());
+
+        IndexPricingEngine indexPricingEngine=new IndexPricingEngineImpl();
+        indexPricingEngine.init();
+        indexPricingEngine.start();
     }
 }
+

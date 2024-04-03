@@ -55,6 +55,6 @@ public class SharedEventLoopGroupWebSocketClient {
         Channel channel = bootstrap.connect(uri.getHost(), uri.getPort()).sync().channel();
         //channel.writeAndFlush(new TextWebSocketFrame("Hello, WebSocket"));
         // 不要在这里关闭Future，因为我们想要保持连接开放
-        // channel.closeFuture().await();
+        //channel.closeFuture().await();
     }
 }
