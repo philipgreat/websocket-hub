@@ -3,18 +3,14 @@
  */
 package com.newbie.websockethub;
 
-import com.newbie.indexprice.core.PriceProvider;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.codec.compression.JdkZlibDecoder;
 import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.websocketx.*;
-import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketClientCompressionHandler;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
@@ -27,19 +23,13 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.zip.GZIPInputStream;
 
-public class SharedEventLoopGroupWebSocketClient {
+public class KrakenWebSocketClient {
 
     private static final EventLoopGroup group = new NioEventLoopGroup();
 
     public static void main(String[] args) throws Exception {
-        URI uri1 = new URI("wss://api.huobi.pro:443/ws");
-        //URI uri2 = new URI("ws://iotlog.doublechaintech.com:80/message-center/public");
-
-        // 使用相同的EventLoopGroup连接到不同的服务器
-        new SharedEventLoopGroupWebSocketClient().connectToWebSocket(uri1, group);
-
-
-        // 添加一个钩子以在JVM关闭时优雅地关闭EventLoopGroup
+        URI uri1 = new URI("wss://ws.kraken.com:443/");
+        new KrakenWebSocketClient().connectToWebSocket(uri1, group);
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             group.shutdownGracefully();
         }));
@@ -58,7 +48,7 @@ public class SharedEventLoopGroupWebSocketClient {
                         pipeline.addLast(new HttpClientCodec(),
                                 new HttpObjectAggregator(8192),
                                 new WebSocketClientProtocolHandler(uri, WebSocketVersion.V13, null, false, null, 65536),
-                                WebSocketClientCompressionHandler.INSTANCE,
+                                //WebSocketClientCompressionHandler.INSTANCE,
                         new SimpleChannelInboundHandler<WebSocketFrame>() {
                                     @Override
                                     protected void channelRead0(ChannelHandlerContext ctx, WebSocketFrame frame) throws Exception {
@@ -73,11 +63,12 @@ public class SharedEventLoopGroupWebSocketClient {
                                             byte[] data = new byte[content.readableBytes()];
                                             content.readBytes(data);//ctx
                                             String value=new String(decompressGzip(data));
-                                            if(value.startsWith("{\"ping")){
-                                                ctx.writeAndFlush(new TextWebSocketFrame(value.replace('i','o')));
-                                            }
-
                                             System.out.println("value "+value);
+//                                            if(value.startsWith("{\"ping")){
+//                                                ctx.writeAndFlush(new TextWebSocketFrame(value.replace('i','o')));
+//                                            }
+//
+//                                            System.out.println("value "+value);
                                         }
 
                                     }
@@ -86,38 +77,11 @@ public class SharedEventLoopGroupWebSocketClient {
                 });
 
         Channel channel = bootstrap.connect(uri.getHost(), uri.getPort()).sync().channel();
-        channel.writeAndFlush(new TextWebSocketFrame("{\"sub\":\"market.btcusdt.trade.detail\",\"id\":\"crypto-ws-client\"}"));
-        channel.writeAndFlush(new TextWebSocketFrame("{\"sub\":\"market.ethusdt.trade.detail\",\"id\":\"crypto-ws-client\"}"));
-
+        channel.writeAndFlush(new TextWebSocketFrame("{\"event\":\"subscribe\",\"pair\":[\"XBT/USD\"],\"subscription\":{\"name\":\"trade\"}}"));
+        //channel.writeAndFlush(new TextWebSocketFrame("{\"sub\":\"market.ethusdt.trade.detail\",\"id\":\"crypto-ws-client\"}"));
+        System.out.println("start working on coinbase");
         // 不要在这里关闭Future，因为我们想要保持连接开放
         //channel.closeFuture().await();
-    }
-    public static byte[] decompressGzip(ByteBuf compressed) throws Exception {
-        // Ensure the buffer is a direct buffer for decompression
-        ByteBuf decompressed = Unpooled.directBuffer();
-        JdkZlibDecoder zlibDecoder = new JdkZlibDecoder(true); // true for GZIP
-
-        try {
-            // Offer the compressed data to the decoder
-            zlibDecoder.channelRead(null, compressed);
-
-            // Reading the decompressed data
-            while (zlibDecoder.isClosed() == false) {
-                ByteBuf part = Unpooled.directBuffer();
-                zlibDecoder.channelRead(null, part);
-                decompressed.writeBytes(part);
-                part.release();
-            }
-
-            // Convert ByteBuf to byte[]
-            byte[] result = new byte[decompressed.readableBytes()];
-            decompressed.readBytes(result);
-            return result;
-        } finally {
-            // Release resources
-            decompressed.release();
-            zlibDecoder.handlerRemoved(null);
-        }
     }
 
     public static byte[] decompressGzip(byte[] compressedData) throws IOException {

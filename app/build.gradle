@@ -26,7 +26,12 @@ dependencies {
 
 application {
     // Define the main class for the application.
-    mainClass = 'com.newbie.websockethub.App'
+    //mainClass = 'com.newbie.websockethub.App'
+    //mainClass = 'com.newbie.websockethub.SharedEventLoopGroupWebSocketClient'
+    mainClass = 'com.newbie.websockethub.CoinbaseWebSocketClient'
+    //mainClass = 'com.newbie.websockethub.KrakenWebSocketClient'
+
+
 }
 
 tasks.named('test') {
