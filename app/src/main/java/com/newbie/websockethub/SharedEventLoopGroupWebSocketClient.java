@@ -60,7 +60,15 @@ public class SharedEventLoopGroupWebSocketClient {
                                 new WebSocketClientProtocolHandler(uri, WebSocketVersion.V13, null, false, null, 65536),
                                 WebSocketClientCompressionHandler.INSTANCE,
                         new SimpleChannelInboundHandler<WebSocketFrame>() {
-                                    @Override
+                            @Override
+                            public void channelActive(ChannelHandlerContext ctx) throws Exception {
+                                super.channelActive(ctx);
+
+                                ctx.writeAndFlush(new TextWebSocketFrame("{\"sub\":\"market.btcusdt.trade.detail\",\"id\":\"crypto-ws-client\"}"));
+
+                            }
+
+                            @Override
                                     protected void channelRead0(ChannelHandlerContext ctx, WebSocketFrame frame) throws Exception {
                                         if(frame instanceof TextWebSocketFrame){
                                             System.out.println("Received message from " + uri + ": " + ((TextWebSocketFrame)frame).text());
@@ -86,7 +94,7 @@ public class SharedEventLoopGroupWebSocketClient {
                 });
 
         Channel channel = bootstrap.connect(uri.getHost(), uri.getPort()).sync().channel();
-        channel.writeAndFlush(new TextWebSocketFrame("{\"sub\":\"market.btcusdt.trade.detail\",\"id\":\"crypto-ws-client\"}"));
+        //channel.writeAndFlush(new TextWebSocketFrame("{\"sub\":\"market.btcusdt.trade.detail\",\"id\":\"crypto-ws-client\"}"));
         //channel.writeAndFlush(new TextWebSocketFrame("{\"sub\":\"market.ethusdt.trade.detail\",\"id\":\"crypto-ws-client\"}"));
 
         // 不要在这里关闭Future，因为我们想要保持连接开放
